@@ -1,0 +1,19 @@
+/* ── StarRating component styles ───────────────────────────────────────── */
+.starrating-root {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.starrating-star {
+  display: inline-flex;
+  transition: transform var(--transition);
+}
+
+.starrating-star.interactive {
+  cursor: pointer;
+}
+
+.starrating-star.interactive:hover {
+  transform: scale(1.2);
+}

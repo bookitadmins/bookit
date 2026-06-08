@@ -1,0 +1,11 @@
+/* ── CanteensList page styles ────────────────────────────────────────────── */
+.canteenslist-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; gap: 1rem; }
+.canteenslist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+.canteenslist-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: all var(--transition); }
+.canteenslist-card:hover { border-color: rgba(168,85,247,0.25); transform: translateY(-2px); box-shadow: var(--shadow-glow); }
+.canteenslist-card-img { position: relative; height: 160px; background: var(--bg-elevated); }
+.canteenslist-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.canteenslist-card-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+.canteenslist-card-status { position: absolute; top: 0.75rem; left: 0.75rem; }
+.canteenslist-card-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.canteenslist-card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border); margin-top: 0.25rem; }

@@ -1,0 +1,154 @@
+/* ── AuthPage styles ─────────────────────────────────────────────────────── */
+.authpage-root {
+  display: flex;
+  min-height: 100vh;
+}
+
+.authpage-hero {
+  flex: 1;
+  background: var(--grad-hero);
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
+.authpage-hero-glow {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.12) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.authpage-hero-content {
+  max-width: 440px;
+  position: relative;
+  z-index: 1;
+}
+
+.authpage-hero-logo {
+  width: 64px;
+  height: 64px;
+  background: var(--grad-amber);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d0d0f;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-amber);
+}
+
+.authpage-hero-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 1rem;
+}
+
+.authpage-hero-subtitle {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.authpage-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.authpage-feature-item {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.authpage-form-panel {
+  width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg-secondary);
+}
+
+.authpage-form-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.authpage-role-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.authpage-role-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: center;
+}
+
+.authpage-role-btn.active {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: var(--amber-400);
+  color: var(--amber-400);
+}
+
+.authpage-pw-wrap {
+  position: relative;
+}
+
+.authpage-pw-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.authpage-switch-text {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+}
+
+.authpage-switch-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--amber-400);
+  font-weight: 600;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+@media (max-width: 860px) {
+  .authpage-hero { display: none; }
+  .authpage-form-panel { width: 100%; }
+}
