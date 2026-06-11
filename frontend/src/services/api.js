@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const SERVER_IP = import.meta.env.VITE_SERVER_IP || 'localhost'
+const API_URL = import.meta.env.VITE_API_URL || `http://${SERVER_IP}:8000`
 
 const api = axios.create({
   baseURL: API_URL,
@@ -73,6 +74,20 @@ export const ordersAPI = {
   myOrders: () => api.get('/api/v1/orders/my'),
   canteenOrders: (canteenId) => api.get(`/api/v1/orders/canteen/${canteenId}`),
   updateStatus: (id, data) => api.put(`/api/v1/orders/${id}/status`, data),
+}
+
+// ─── Institute Admin ─────────────────────────────────────────────────────────
+export const instituteAdminAPI = {
+  stats: () => api.get('/api/v1/admin/institute-stats'),
+  listOwners: () => api.get('/api/v1/admin/owners'),
+  approveOwner: (id) => api.put(`/api/v1/admin/owners/${id}/approve`),
+  rejectOwner: (id) => api.put(`/api/v1/admin/owners/${id}/reject`),
+  listUsers: () => api.get('/api/v1/admin/users'),
+}
+
+// ─── Institutions ────────────────────────────────────────────────────────────
+export const institutionsAPI = {
+  list: () => api.get('/api/v1/institutions'),
 }
 
 export default api

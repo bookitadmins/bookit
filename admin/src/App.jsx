@@ -6,6 +6,7 @@ import AdminAuth from './pages/AdminAuth'
 import AdminDashboard from './pages/AdminDashboard'
 import OwnersApproval from './pages/OwnersApproval'
 import CanteensList from './pages/CanteensList'
+import InstitutionsPage from './pages/InstitutionsPage'
 import './index.css'
 
 function ProtectedLayout({ children }) {
@@ -31,6 +32,9 @@ function AdminRoutes() {
       />
       <Route path="/" element={
         <ProtectedLayout><AdminDashboard /></ProtectedLayout>
+      } />
+      <Route path="/institutions" element={
+        <ProtectedLayout><InstitutionsPage /></ProtectedLayout>
       } />
       <Route path="/owners" element={
         <ProtectedLayout><OwnersApproval /></ProtectedLayout>

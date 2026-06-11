@@ -8,28 +8,13 @@ Detailed description of the page components in the frontend.
 
 ### `Dashboard` (`/`)
 The main entry point for students.
-- Lists all available canteens.
-- Supports sorting by rating (ascending/descending).
-- Displays canteen cards with names, images, and current ratings.
+- Lists available canteens **scoped to the student's institution**.
+- Displays canteen cards with names, images, and ratings.
 
 ### `PriceComparison` (`/search`)
 The "Price Finder" feature.
 - Allows students to search for any dish name.
-- Queries the backend to find all menu items across all canteens matching the query.
-- Displays results sorted by price (cheapest first) for easy comparison.
-
-### `CanteenDetail` (`/canteen/:id`)
-Detailed view of a single canteen.
-- Shows canteen description and banner.
-- Displays the full menu grouped by categories (e.g., "Breakfast", "Lunch").
-- **Cart Management:** Allows adding/removing items and adjusting quantities.
-- **Checkout:** Allows adding notes and placing an order.
-- **Reviews:** Displays existing reviews and allows students to submit their own rating and comment.
-
-### `OrderHistory` (`/orders`)
-- Lists all orders placed by the student.
-- Shows current status (e.g., "Preparing", "Ready in 5 min").
-- Real-time updates via WebSockets ensure the status is always current without refreshing.
+- Displays results **from all canteens within the same institute**, sorted by price.
 
 ---
 
@@ -37,30 +22,37 @@ Detailed view of a single canteen.
 
 ### `OwnerDashboard` (`/owner`)
 The mission control for canteen owners.
-- **Live Order Ticker:** Automatically updates when a new order is received via WebSockets.
-- Lists all active and past orders for the owner's canteen.
+- **Live Order Ticker:** Real-time updates for new orders within the owner's canteen.
+- **Institutional Context:** Owners only see orders and data for their specific campus.
 
-### `OrderFulfillment` (`/owner/order/:id`)
-Detailed view for processing an order.
-- Shows customer details, items ordered, and special notes.
-- **Status Management:** Owners can update the status to "Preparing", "Ready in 5", "Completed", or "Cancelled".
-- **Prep Time:** Allows owners to set an estimated preparation time when moving to "Preparing".
+---
 
-### `MenuEditor` (`/owner/menu`)
-- Allows owners to add new menu items.
-- Edit existing item details (name, description, price, category, availability).
-- Upload item photos.
-- Toggle item availability (out-of-stock items are hidden from students).
+## Institute Admin Pages
+
+### `InstituteDashboard` (`/admin`)
+- Overview of institutional statistics (total students, owners, canteens, orders).
+- Alerts for pending canteen owner applications.
+
+### `OwnersApproval` (`/admin/owners`)
+- Review and approve/reject canteen owner registrations within the institute.
+- Access to owner profiles and FSSAI licenses.
 
 ---
 
 ## Auth & Onboarding
 
 ### `AuthPage` (`/auth`)
-- Unified interface for Login and Registration.
-- Form validation and error handling (e.g., "Email already registered").
+- **Multi-Institution Registration:**
+    - **Institute Selection:** Users must pick their IIT from a dropdown (fetched from `/api/v1/institutions`).
+    - **Role Selection:** Toggle between `STUDENT` and `CANTEEN_OWNER`.
+    - **Dynamic Fields:** 
+        - Students provide roll number, hostel, and room.
+        - Owners provide their FSSAI license number.
+- **Tiered Redirects:**
+    - Students -> Welcome Student
+    - Owners (Approved) -> Welcome Owner
+    - Owners (Pending) -> Welcome Pending
+    - Admins -> Admin Portal (separate dashboard)
 
 ### `WelcomePages`
-- **`WelcomeStudent`**: Post-registration onboarding for students.
-- **`WelcomeOwner`**: Onboarding for owners, informing them about the approval process.
-- **`WelcomePending`**: A "holding" page for owners whose accounts have not yet been approved by an admin.
+Updated to personally greet users using their profile names (`user.student_profile.name` or `user.owner_profile.name`).

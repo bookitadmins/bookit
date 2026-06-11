@@ -9,6 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from database import get_db
 
@@ -27,11 +28,12 @@ def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
-def create_access_token(user_id: str, role: str, is_approved: bool = True) -> str:
+def create_access_token(user_id: str, role: str, is_approved: bool = True, institute_id: Optional[str] = None) -> str:
     payload = {
         "sub": user_id,
         "role": role,
         "is_approved": is_approved,
+        "institute_id": institute_id,
         "exp": datetime.utcnow() + timedelta(minutes=JWT_EXPIRE_MINUTES),
         "iat": datetime.utcnow(),
     }
@@ -60,28 +62,46 @@ async def get_current_user(
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token payload")
 
-    result = await db.execute(select(User).where(User.id == UUID(user_id)))
+    result = await db.execute(
+        select(User)
+        .where(User.id == UUID(user_id))
+        .options(
+            selectinload(User.student_profile),
+            selectinload(User.owner_profile),
+            selectinload(User.admin_profile)
+        )
+    )
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.is_disabled:
+        raise HTTPException(status_code=403, detail="Your account has been disabled")
+        
     return user
 
 
+async def require_super_admin(current_user=Depends(get_current_user)):
+    if current_user.role != "SUPER_ADMIN":
+        raise HTTPException(status_code=403, detail="Super admin access required")
+    return current_user
+
+
+async def require_institute_admin(current_user=Depends(get_current_user)):
+    if current_user.role != "INSTITUTE_ADMIN":
+        raise HTTPException(status_code=403, detail="Institute admin access required")
+    return current_user
+
+
 async def require_owner(current_user=Depends(get_current_user)):
-    if current_user.role != "canteen_owner":
+    if current_user.role != "CANTEEN_OWNER":
         raise HTTPException(status_code=403, detail="Canteen owner access required")
     if not current_user.is_approved:
-        raise HTTPException(status_code=403, detail="Your account is pending admin approval")
+        raise HTTPException(status_code=403, detail="Your account is pending approval")
     return current_user
 
 
 async def require_student(current_user=Depends(get_current_user)):
-    if current_user.role != "student_resident":
+    if current_user.role != "STUDENT":
         raise HTTPException(status_code=403, detail="Student access required")
-    return current_user
-
-
-async def require_admin(current_user=Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
     return current_user

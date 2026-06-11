@@ -9,34 +9,33 @@ from websocket_manager import ws_manager
 from auth import decode_token, hash_password
 import minio_client as mc
 
-from routers import auth, canteens, menu, orders
+from routers import auth, canteens, menu, orders, institutions
 from routers import admin as admin_router
 
 
 async def seed_admin():
-    """Ensure a default admin account exists on startup."""
+    """Ensure a default super admin account exists on startup."""
     from database import AsyncSessionLocal
-    from models import User
+    from models import User, UserRole
     from sqlalchemy import select
 
     ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@bookit.app")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
     async with AsyncSessionLocal() as session:
+        # Seed Super Admin
         result = await session.execute(select(User).where(User.email == ADMIN_EMAIL))
         existing = result.scalar_one_or_none()
         if not existing:
             admin = User(
                 email=ADMIN_EMAIL,
                 password_hash=hash_password(ADMIN_PASSWORD),
-                name="BookIt Admin",
-                phone="0000000000",
-                role="admin",
+                role=UserRole.SUPER_ADMIN,
                 is_approved=True,
             )
             session.add(admin)
             await session.commit()
-            print(f"✅ Default admin created: {ADMIN_EMAIL}")
+            print(f"✅ Default super admin created: {ADMIN_EMAIL}")
         else:
             print(f"ℹ️  Admin already exists: {ADMIN_EMAIL}")
 
@@ -61,13 +60,16 @@ app = FastAPI(
 )
 
 # ─── CORS ──────────────────────────────────────────────────────────────────────
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-ADMIN_URL = os.getenv("ADMIN_URL", "http://localhost:5174")
+SERVER_IP = os.getenv("SERVER_IP", "localhost")
+FRONTEND_URL = os.getenv("FRONTEND_URL", f"http://{SERVER_IP}:5173")
+ADMIN_URL = os.getenv("ADMIN_URL", f"http://{SERVER_IP}:5174")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "*",
         FRONTEND_URL, ADMIN_URL,
+        f"http://{SERVER_IP}:5173", f"http://{SERVER_IP}:5174",
         "http://localhost:5173", "http://localhost:5174",
         "http://localhost:3000",
     ],
@@ -78,6 +80,7 @@ app.add_middleware(
 
 # ─── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
+app.include_router(institutions.router)
 app.include_router(canteens.router)
 app.include_router(menu.router)
 app.include_router(orders.router)

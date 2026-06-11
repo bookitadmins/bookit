@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const SERVER_IP = import.meta.env.VITE_SERVER_IP || 'localhost'
+const API_URL = import.meta.env.VITE_API_URL || `http://${SERVER_IP}:8000`
 
 const api = axios.create({
   baseURL: API_URL,
@@ -30,12 +31,21 @@ export const adminAuthAPI = {
 }
 
 export const adminAPI = {
-  stats: () => api.get('/api/v1/admin/stats'),
+  globalStats: () => api.get('/api/v1/admin/global-stats'),
+  instituteStats: () => api.get('/api/v1/admin/institute-stats'),
   listOwners: () => api.get('/api/v1/admin/owners'),
   approveOwner: (id) => api.put(`/api/v1/admin/owners/${id}/approve`),
   rejectOwner: (id) => api.put(`/api/v1/admin/owners/${id}/reject`),
   listUsers: () => api.get('/api/v1/admin/users'),
   listCanteens: () => api.get('/api/v1/admin/canteens'),
+  toggleUserDisabled: (userId) => api.patch(`/api/v1/admin/users/${userId}/toggle-disabled`),
+}
+
+export const institutionsAPI = {
+  list: () => api.get('/api/v1/institutions'),
+  create: (data) => api.post('/api/v1/institutions', data),
+  update: (id, data) => api.patch(`/api/v1/institutions/${id}`, data),
+  delete: (id) => api.delete(`/api/v1/institutions/${id}`),
 }
 
 export default api

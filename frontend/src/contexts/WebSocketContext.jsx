@@ -4,7 +4,8 @@ import toast from 'react-hot-toast'
 
 const WebSocketContext = createContext(null)
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000'
+const SERVER_IP = import.meta.env.VITE_SERVER_IP || 'localhost'
+const WS_URL = import.meta.env.VITE_WS_URL || `ws://${SERVER_IP}:8000`
 
 export function WebSocketProvider({ children }) {
   const { user, token } = useAuth()

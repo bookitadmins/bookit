@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { adminAPI } from '../../services/api'
+import { instituteAdminAPI } from '../../../services/api'
 import { CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import './index.css'
@@ -12,7 +12,12 @@ export default function OwnersApproval() {
 
   const load = async () => {
     setLoading(true)
-    try { const res = await adminAPI.listOwners(); setOwners(res.data) } catch {}
+    try {
+      const res = await instituteAdminAPI.listOwners()
+      setOwners(res.data)
+    } catch (err) {
+      toast.error('Failed to load owners')
+    }
     setLoading(false)
   }
 
@@ -21,7 +26,7 @@ export default function OwnersApproval() {
   const approve = async (id, name) => {
     setActing(a => ({ ...a, [id]: 'approving' }))
     try {
-      await adminAPI.approveOwner(id)
+      await instituteAdminAPI.approveOwner(id)
       setOwners(o => o.map(u => u.id === id ? { ...u, is_approved: true } : u))
       toast.success(`✅ ${name || 'Owner'} approved!`)
     } catch { toast.error('Approval failed') }
@@ -32,7 +37,7 @@ export default function OwnersApproval() {
     if (!confirm(`Revoke access for ${name || 'this owner'}?`)) return
     setActing(a => ({ ...a, [id]: 'rejecting' }))
     try {
-      await adminAPI.rejectOwner(id)
+      await instituteAdminAPI.rejectOwner(id)
       setOwners(o => o.map(u => u.id === id ? { ...u, is_approved: false } : u))
       toast.success(`❌ ${name || 'Owner'} access revoked`)
     } catch { toast.error('Action failed') }
@@ -53,7 +58,7 @@ export default function OwnersApproval() {
         <div className="ownersapproval-header animate-fade-in">
           <div>
             <h1>Canteen Owner <span className="gradient-text">Approvals</span></h1>
-            <p className="text-secondary">Review and approve canteen owner registrations</p>
+            <p className="text-secondary">Review and approve canteen owner registrations for your institute</p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             {pendingCount > 0 && (

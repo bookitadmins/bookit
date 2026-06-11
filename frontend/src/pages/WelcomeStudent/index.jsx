@@ -22,7 +22,7 @@ export default function WelcomeStudent() {
 
         <h1 className="welcomestudent-title">
           Welcome,{' '}
-          <span className="gradient-text">{user?.name?.split(' ')[0] || 'there'}!</span>
+          <span className="gradient-text">{user?.student_profile?.name?.split(' ')[0] || 'there'}!</span>
         </h1>
 
         <p className="welcomestudent-subtitle">

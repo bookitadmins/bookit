@@ -24,7 +24,7 @@ export default function WelcomeOwner() {
 
         <h1 className="welcomeowner-title">
           Welcome back,{' '}
-          <span className="gradient-text">{user?.name?.split(' ')[0] || 'Chef'}!</span>
+          <span className="gradient-text">{user?.owner_profile?.name?.split(' ')[0] || 'Chef'}!</span>
         </h1>
 
         <p className="welcomeowner-subtitle">

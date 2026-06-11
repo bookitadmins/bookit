@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import List
 from uuid import UUID
 from decimal import Decimal
@@ -12,6 +13,18 @@ from auth import get_current_user, require_owner
 from websocket_manager import ws_manager
 
 router = APIRouter(prefix="/api/v1/orders", tags=["orders"])
+
+
+def _order_query():
+    """Base query with all relationships eagerly loaded."""
+    return (
+        select(Order)
+        .options(
+            selectinload(Order.items),
+            selectinload(Order.canteen),
+            selectinload(Order.user),
+        )
+    )
 
 
 @router.post("", response_model=OrderOut, status_code=201)
@@ -59,21 +72,24 @@ async def create_order(
         oi.order_id = order.id
         db.add(oi)
     await db.flush()
-    await db.refresh(order)
 
     # Notify canteen owner via WebSocket
+    customer_name = current_user.student_profile.name if current_user.student_profile else "Customer"
     await ws_manager.send_to_user(
         str(canteen.owner_id),
         {
             "type": "new_order",
             "order_id": str(order.id),
-            "customer_name": current_user.name,
+            "customer_name": customer_name,
             "total_amount": str(total),
             "item_count": sum(i.quantity for i in order_items_data),
-            "message": f"New order from {current_user.name}! ₹{total}",
+            "message": f"New order from {customer_name}! ₹{total}",
         },
     )
 
+    # Re-fetch with relationships loaded
+    result = await db.execute(_order_query().where(Order.id == order.id))
+    order = result.scalar_one()
     return OrderOut.model_validate(order)
 
 
@@ -83,7 +99,7 @@ async def my_orders(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Order)
+        _order_query()
         .where(Order.user_id == current_user.id)
         .order_by(Order.created_at.desc())
     )
@@ -103,7 +119,7 @@ async def canteen_orders(
         raise HTTPException(status_code=403, detail="Not your canteen")
 
     result = await db.execute(
-        select(Order)
+        _order_query()
         .where(Order.canteen_id == canteen_id)
         .order_by(Order.created_at.desc())
     )
@@ -133,7 +149,6 @@ async def update_order_status(
         order.estimated_prep_time = payload.estimated_prep_time
 
     await db.flush()
-    await db.refresh(order)
 
     # Determine notification message
     status_messages = {
@@ -155,4 +170,7 @@ async def update_order_status(
             },
         )
 
+    # Re-fetch with relationships loaded
+    result = await db.execute(_order_query().where(Order.id == order.id))
+    order = result.scalar_one()
     return OrderOut.model_validate(order)

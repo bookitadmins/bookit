@@ -123,15 +123,28 @@ async def upload_menu_item_image(
 @router.get("/api/v1/search", response_model=List[PriceComparisonResult])
 async def search_dish(
     q: str = Query(min_length=1),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Cross-canteen price comparison: search a dish name across all canteens."""
-    result = await db.execute(
-        select(MenuItem).where(
-            MenuItem.name.ilike(f"%{q}%"),
-            MenuItem.is_available == True,
-        )
+    """Cross-canteen price comparison: search a dish name across all canteens in the institute."""
+    # Extract institute_id from profile
+    inst_id = None
+    if current_user.role == "STUDENT":
+        inst_id = current_user.student_profile.institute_id
+    elif current_user.role == "CANTEEN_OWNER":
+        inst_id = current_user.owner_profile.institute_id
+    elif current_user.role == "INSTITUTE_ADMIN":
+        inst_id = current_user.admin_profile.institute_id
+
+    stmt = select(MenuItem).where(
+        MenuItem.name.ilike(f"%{q}%"),
+        MenuItem.is_available == True,
     )
+    
+    if inst_id:
+        stmt = stmt.join(Canteen).where(Canteen.institute_id == inst_id)
+        
+    result = await db.execute(stmt)
     items = result.scalars().all()
 
     output = []

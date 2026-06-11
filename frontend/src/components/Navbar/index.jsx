@@ -6,7 +6,7 @@ import { useState } from 'react'
 import './index.css'
 
 export default function Navbar() {
-  const { user, logout, isOwner } = useAuth()
+  const { user, logout, isOwner, isInstituteAdmin } = useAuth()
   const ws = useWebSocket()
   const navigate = useNavigate()
   const location = useLocation()
@@ -40,6 +40,11 @@ export default function Navbar() {
               <>
                 <Link to="/owner" className={`navbar-nav-link ${isActive('/owner')}`}>Dashboard</Link>
                 <Link to="/owner/menu" className={`navbar-nav-link ${isActive('/owner/menu')}`}>Menu Editor</Link>
+              </>
+            ) : isInstituteAdmin ? (
+              <>
+                <Link to="/admin" className={`navbar-nav-link ${isActive('/admin')}`}>Dashboard</Link>
+                <Link to="/admin/owners" className={`navbar-nav-link ${isActive('/admin/owners')}`}>Approvals</Link>
               </>
             ) : (
               <>
@@ -75,13 +80,15 @@ export default function Navbar() {
 
               <div className="navbar-user-menu" onClick={() => setMenuOpen(!menuOpen)}>
                 <div className="navbar-user-avatar">
-                  {user.name?.[0]?.toUpperCase() || 'U'}
+                  {(user.student_profile?.name || user.owner_profile?.name || 'U')[0].toUpperCase()}
                 </div>
                 <div className="navbar-user-info">
-                  <span className="navbar-user-name">{user.name.split(' ')[0]}</span>
-                  <span className={`badge ${isOwner ? 'badge-amber' : 'badge-blue'}`}
+                  <span className="navbar-user-name">
+                    {(user.student_profile?.name || user.owner_profile?.name || user.admin_profile?.name || 'User').split(' ')[0]}
+                  </span>
+                  <span className={`badge ${isOwner ? 'badge-amber' : (isInstituteAdmin ? 'badge-purple' : 'badge-blue')}`}
                     style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}>
-                    {isOwner ? 'Owner' : 'Student'}
+                    {isOwner ? 'Owner' : (isInstituteAdmin ? 'Admin' : 'Student')}
                   </span>
                 </div>
 

@@ -12,7 +12,9 @@ export function AdminAuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const res = await adminAuthAPI.login({ email, password })
     const { access_token, user: u } = res.data
-    if (u.role !== 'admin') throw new Error('Not an admin account')
+    if (u.role !== 'SUPER_ADMIN') {
+      throw new Error('Only Super Admins can access this portal')
+    }
     localStorage.setItem('bookit_admin_token', access_token)
     localStorage.setItem('bookit_admin_user', JSON.stringify(u))
     setToken(access_token)
@@ -31,13 +33,17 @@ export function AdminAuthProvider({ children }) {
     <AdminAuthContext.Provider value={{
       user, token,
       isAuthenticated: !!token && !!user,
+      isSuperAdmin: user?.role === 'SUPER_ADMIN',
       login, logout,
     }}>
       {children}
     </AdminAuthContext.Provider>
   )
+
 }
 
 export function useAdminAuth() {
-  return useContext(AdminAuthContext)
+  const ctx = useContext(AdminAuthContext)
+  if (!ctx) throw new Error('useAdminAuth must be used inside AdminAuthProvider')
+  return ctx
 }

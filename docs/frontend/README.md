@@ -27,6 +27,10 @@ The application is split into student and owner roles:
 - **Menu Editor:** Manage menu items and pricing.
 - **Order Fulfillment:** Detailed view for processing an order.
 
+### [Institute Admin Pages](./pages.md#institute-admin-pages)
+- **Dashboard:** View institutional statistics and alerts.
+- **Owner Approvals:** Review and approve canteen owner registrations.
+
 ### [Auth & Onboarding](./pages.md#auth--onboarding)
 - **AuthPage:** Combined Login/Register.
 - **Welcome Pages:** Role-specific onboarding and pending approval status.

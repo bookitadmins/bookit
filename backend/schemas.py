@@ -13,7 +13,16 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=6)
     name: str = Field(min_length=2, max_length=100)
     phone: str = Field(min_length=7, max_length=15)
-    role: str = Field(pattern="^(student_resident|canteen_owner)$")
+    role: str = Field(pattern="^(STUDENT|CANTEEN_OWNER)$")
+    institute_id: UUID
+    
+    # Optional fields for STUDENT
+    roll_number: Optional[str] = None
+    hostel_name: Optional[str] = None
+    room_number: Optional[str] = None
+    
+    # Optional fields for CANTEEN_OWNER
+    fssai_license: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -30,10 +39,83 @@ class TokenResponse(BaseModel):
 class UserOut(BaseModel):
     id: UUID
     email: str
-    name: str
     role: str
-    phone: str
     is_approved: bool
+    is_disabled: bool
+    created_at: datetime
+    
+    # Profile data (will be populated based on role)
+    student_profile: Optional["StudentProfileOut"] = None
+    owner_profile: Optional["CanteenOwnerProfileOut"] = None
+    admin_profile: Optional["InstituteAdminProfileOut"] = None
+
+    model_config = {"from_attributes": True}
+
+
+# ─── Institution ───────────────────────────────────────────────────────────────
+
+class InstitutionCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=200)
+    short_name: str = Field(min_length=2, max_length=20)
+    domain: Optional[str] = None
+    logo_url: Optional[str] = None
+    city: Optional[str] = None
+
+
+class InstitutionUpdate(BaseModel):
+    name: Optional[str] = None
+    short_name: Optional[str] = None
+    domain: Optional[str] = None
+    logo_url: Optional[str] = None
+    city: Optional[str] = None
+
+
+class InstitutionOut(BaseModel):
+    id: UUID
+    name: str
+    short_name: str
+    domain: Optional[str]
+    logo_url: Optional[str]
+    city: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ─── Profiles ──────────────────────────────────────────────────────────────────
+
+class StudentProfileOut(BaseModel):
+    id: UUID
+    institute_id: UUID
+    name: str
+    phone: str
+    roll_number: Optional[str]
+    hostel_name: Optional[str]
+    room_number: Optional[str]
+    wallet_balance: Decimal
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CanteenOwnerProfileOut(BaseModel):
+    id: UUID
+    institute_id: UUID
+    name: str
+    phone: str
+    fssai_license: Optional[str]
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class InstituteAdminProfileOut(BaseModel):
+    id: UUID
+    institute_id: UUID
+    name: str
+    phone: str
+    created_at: datetime
 
     model_config = {"from_attributes": True}
 
@@ -43,16 +125,16 @@ class UserOut(BaseModel):
 class OwnerApprovalOut(BaseModel):
     id: UUID
     email: str
-    name: str
-    phone: str
     is_approved: bool
     role: str
+    owner_profile: Optional[CanteenOwnerProfileOut]
 
     model_config = {"from_attributes": True}
 
 
 class AdminStatsOut(BaseModel):
     total_users: int
+    total_institutions: int
     total_students: int
     total_owners: int
     pending_owners: int
@@ -66,6 +148,7 @@ class AdminStatsOut(BaseModel):
 class CanteenCreate(BaseModel):
     name: str = Field(min_length=2, max_length=100)
     description: str = ""
+    institute_id: UUID
 
 
 class CanteenUpdate(BaseModel):
@@ -77,11 +160,14 @@ class CanteenUpdate(BaseModel):
 class CanteenOut(BaseModel):
     id: UUID
     owner_id: UUID
+    institute_id: UUID
     name: str
     description: str
     image_url: str
     rating: Decimal
     is_open: bool
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 
@@ -116,6 +202,8 @@ class MenuItemOut(BaseModel):
     category: str
     image_url: str
     is_available: bool
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 
@@ -196,3 +284,4 @@ class PriceComparisonResult(BaseModel):
 
 
 TokenResponse.model_rebuild()
+UserOut.model_rebuild()

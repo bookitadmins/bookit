@@ -1,18 +1,17 @@
 # Admin Documentation
 
-The admin dashboard is a dedicated React application for system administrators.
-
-## 📁 File Reference
-
-| File | Description |
-|---|---|
-| [`App.jsx`](./files.md#appjsx) | Admin-specific routing and layout. |
-| [`services/api.js`](./files.md#servicesapijs) | API client for admin endpoints. |
-| [`contexts/AdminAuthContext.jsx`](./files.md#contextsadminauthcontextjsx) | Admin authentication state. |
+The admin dashboard is a dedicated React application exclusively for **Super Administrators**.
 
 ## 🖼️ Pages
 
-- **AdminDashboard:** Displays platform-wide statistics (total orders, pending owners, etc.).
-- **OwnersApproval:** Interface to review and approve/reject canteen owner applications.
-- **CanteensList:** Overview of all canteens in the system.
-- **AdminAuth:** Login page for the admin account.
+### **Institutions Management** (`/institutions`)
+- Interface to create, update, and delete IIT institutions on the platform.
+- Managed fields: Full Name, Short Name (e.g., IITB), Domain, City, and Logo.
+
+### **Platform Overview** (`/`)
+- Global view of all users, institutions, and platform-wide orders.
+
+### **User Management**
+- Super Admins can deactivate/enable any user account globally using the `toggle-disabled` feature.
+
+> ℹ️ **Institutional Management** (for Institute Admins) is handled via the main frontend application at `/admin`.

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, asc, func
+from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from uuid import UUID
 
@@ -19,18 +20,35 @@ router = APIRouter(prefix="/api/v1/canteens", tags=["canteens"])
 @router.get("", response_model=List[CanteenOut])
 async def list_canteens(
     sort: str = Query("desc", pattern="^(asc|desc)$"),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Extract institute_id from profile
+    inst_id = None
+    if current_user.role == "STUDENT":
+        inst_id = current_user.student_profile.institute_id
+    elif current_user.role == "CANTEEN_OWNER":
+        inst_id = current_user.owner_profile.institute_id
+    elif current_user.role == "INSTITUTE_ADMIN":
+        inst_id = current_user.admin_profile.institute_id
+    
     order_fn = desc if sort == "desc" else asc
-    result = await db.execute(
-        select(Canteen).order_by(order_fn(Canteen.rating))
-    )
+    stmt = select(Canteen).order_by(order_fn(Canteen.rating))
+    
+    if inst_id:
+        stmt = stmt.where(Canteen.institute_id == inst_id)
+        
+    result = await db.execute(stmt)
     return [CanteenOut.model_validate(c) for c in result.scalars().all()]
 
 
 @router.get("/{canteen_id}", response_model=CanteenWithOwner)
 async def get_canteen(canteen_id: UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Canteen).where(Canteen.id == canteen_id))
+    result = await db.execute(
+        select(Canteen)
+        .options(selectinload(Canteen.owner))
+        .where(Canteen.id == canteen_id)
+    )
     canteen = result.scalar_one_or_none()
     if not canteen:
         raise HTTPException(status_code=404, detail="Canteen not found")
@@ -45,6 +63,7 @@ async def create_canteen(
 ):
     canteen = Canteen(
         owner_id=current_user.id,
+        institute_id=current_user.owner_profile.institute_id,
         name=payload.name,
         description=payload.description,
     )
@@ -106,7 +125,10 @@ async def upload_canteen_image(
 @router.get("/{canteen_id}/reviews", response_model=List[ReviewOut])
 async def list_reviews(canteen_id: UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(Review).where(Review.canteen_id == canteen_id).order_by(Review.created_at.desc())
+        select(Review)
+        .options(selectinload(Review.user))
+        .where(Review.canteen_id == canteen_id)
+        .order_by(Review.created_at.desc())
     )
     return [ReviewOut.model_validate(r) for r in result.scalars().all()]
 
@@ -118,7 +140,6 @@ async def create_review(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Check canteen exists
     result = await db.execute(select(Canteen).where(Canteen.id == canteen_id))
     canteen = result.scalar_one_or_none()
     if not canteen:
@@ -140,5 +161,13 @@ async def create_review(
     avg = avg_result.scalar() or 0
     canteen.rating = round(float(avg), 2)
     await db.flush()
+
+    # Re-fetch review with user loaded
     await db.refresh(review)
+    result2 = await db.execute(
+        select(Review)
+        .options(selectinload(Review.user))
+        .where(Review.id == review.id)
+    )
+    review = result2.scalar_one()
     return ReviewOut.model_validate(review)

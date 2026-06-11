@@ -6,9 +6,10 @@ A full-stack web application connecting campus residents and students with on-ca
 
 | Feature | Description |
 |---|---|
-| 🔐 **Authentication** | JWT-based login/register with role selection |
-| 🏪 **Canteen Listings** | Browse and sort canteens by rating |
-| 🔍 **Price Finder** | Search any dish — compare prices across all canteens instantly |
+| 🔐 **Authentication** | JWT-based multi-tier login (Super Admin, Institute Admin, Owner, Student) |
+| 🏢 **Multi-Institute** | Platform-wide support for multiple IITs and campuses |
+| 🏪 **Canteen Listings** | Browse canteens within your institute |
+| 🔍 **Price Finder** | Search any dish — compare prices across your institute's canteens |
 | 📋 **Menu Browsing** | Category-grouped menus with cart management |
 | 🛒 **Pre-Booking** | Place orders with item quantities and notes |
 | 🔔 **Real-time Alerts** | WebSocket-powered live order status updates |
@@ -27,6 +28,14 @@ Frontend (React + Vite)  ←→  Backend (FastAPI)  ←→  PostgreSQL
                               Ports 9000/9001
 ```
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the [**DOCS.md**](./DOCS.md) file and the `/docs` directory.
+
+- [**Architecture Overview**](./docs/architecture.md)
+- [**API Reference**](./docs/backend/api.md)
+- [**Deployment Configuration**](./docs/credentials/defaults.md)
+
 ## 🚀 Quick Start (Docker Compose)
 
 ```bash
@@ -36,11 +45,15 @@ cd bookit
 # 2. Copy environment file
 cp .env.example .env
 
-# 3. Start all services
-docker compose up --build
+# 3. Configure (Optional)
+# Edit .env and set SERVER_IP to your server's address if not using localhost.
 
+# 4. Start all services
+docker compose up --build
+```
 # Services:
 # Frontend  → http://localhost:5173
+# Admin     → http://localhost:5174
 # Backend   → http://localhost:8000
 # API Docs  → http://localhost:8000/docs
 # MinIO UI  → http://localhost:9001
@@ -82,24 +95,26 @@ npm run dev
 
 ## 📊 Database Schema
 
-- **Users** — Email, hashed password, role (student_resident / canteen_owner), name, phone
-- **Canteens** — Owner, name, banner image, rating (auto-updated from reviews)
+- **Users** — Email, hashed password, role (SUPER_ADMIN, INSTITUTE_ADMIN, CANTEEN_OWNER, STUDENT)
+- **Institutions** — Name, short name, domain, city (managed by Super Admin)
+- **StudentProfiles** — User, institute, roll number, hostel, room, wallet
+- **CanteenOwnerProfiles** — User, institute, name, phone, FSSAI license
+- **Canteens** — Owner, institute, name, banner image, rating
 - **MenuItems** — Name, price, category, image, availability toggle
 - **Orders** — User, canteen, status, prep time, items, total
-- **OrderItems** — Snapshot of item name/price at order time
-- **Reviews** — 1–5 star rating + comment, drives canteen rating average
+- **Reviews** — rating + comment, drives canteen rating average
 
 ## 🔌 API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/v1/auth/register` | Register new user |
+| POST | `/api/v1/auth/register` | Register new user (Student or Owner) |
 | POST | `/api/v1/auth/login` | Login |
-| GET | `/api/v1/canteens` | List all canteens (sort by rating) |
-| GET | `/api/v1/canteens/{id}/menu` | Get canteen menu |
-| GET | `/api/v1/search?q=dish` | Cross-canteen price comparison |
+| GET | `/api/v1/institutions` | List all institutes (public) |
+| GET | `/api/v1/canteens` | List canteens in your institute |
+| GET | `/api/v1/search?q=dish` | Intra-institute price comparison |
 | POST | `/api/v1/orders` | Place an order |
-| PUT | `/api/v1/orders/{id}/status` | Update order status (triggers WS notification) |
+| PUT | `/api/v1/orders/{id}/status` | Update order status |
 | WS | `/ws/{user_id}?token=...` | Real-time notification channel |
 
 Full interactive docs at `/docs` when the backend is running.

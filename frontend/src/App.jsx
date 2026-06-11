@@ -16,15 +16,27 @@ import OrderHistory from './pages/student/OrderHistory'
 import OwnerDashboard from './pages/owner/OwnerDashboard'
 import OrderFulfillment from './pages/owner/OrderFulfillment'
 import MenuEditor from './pages/owner/MenuEditor'
+import InstituteDashboard from './pages/institute_admin/InstituteDashboard'
+import OwnersApproval from './pages/institute_admin/OwnersApproval'
 
 function ProtectedRoute({ children, role }) {
-  const { isAuthenticated, isOwner, isStudent, user } = useAuth()
+  const { isAuthenticated, isOwner, isStudent, isInstituteAdmin, user } = useAuth()
   if (!isAuthenticated) return <Navigate to="/auth" replace />
+
   if (role === 'owner') {
     if (!isOwner) return <Navigate to="/" replace />
     if (!user?.is_approved) return <Navigate to="/welcome/pending" replace />
   }
-  if (role === 'student' && !isStudent) return <Navigate to="/owner" replace />
+  if (role === 'student' && !isStudent) {
+    if (isOwner) return <Navigate to="/owner" replace />
+    if (isInstituteAdmin) return <Navigate to="/admin" replace />
+    return <Navigate to="/auth" replace />
+  }
+  if (role === 'admin' && !isInstituteAdmin) {
+    if (isStudent) return <Navigate to="/" replace />
+    if (isOwner) return <Navigate to="/owner" replace />
+    return <Navigate to="/auth" replace />
+  }
   return children
 }
 
@@ -40,7 +52,7 @@ function AppRoutes() {
           path="/auth"
           element={
             isAuthenticated
-              ? <Navigate to={isOwner ? '/owner' : '/'} replace />
+              ? <Navigate to={isOwner ? '/owner' : (isInstituteAdmin ? '/admin' : '/')} replace />
               : <AuthPage />
           }
         />
@@ -67,6 +79,10 @@ function AppRoutes() {
         <Route path="/owner/order/:id" element={<ProtectedRoute role="owner"><OrderFulfillment /></ProtectedRoute>} />
         <Route path="/owner/menu" element={<ProtectedRoute role="owner"><MenuEditor /></ProtectedRoute>} />
 
+        {/* Institute Admin routes */}
+        <Route path="/admin" element={<ProtectedRoute role="admin"><InstituteDashboard /></ProtectedRoute>} />
+        <Route path="/admin/owners" element={<ProtectedRoute role="admin"><OwnersApproval /></ProtectedRoute>} />
+
         {/* Fallback */}
         <Route
           path="*"
@@ -76,7 +92,7 @@ function AppRoutes() {
                 isAuthenticated
                   ? (isOwner
                       ? (user?.is_approved ? '/owner' : '/welcome/pending')
-                      : '/')
+                      : (isInstituteAdmin ? '/admin' : '/'))
                   : '/auth'
               }
               replace

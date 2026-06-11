@@ -40,13 +40,15 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
-  const isOwner = user?.role === 'canteen_owner'
-  const isStudent = user?.role === 'student_resident'
+  const isOwner = user?.role === 'CANTEEN_OWNER'
+  const isStudent = user?.role === 'STUDENT'
+  const isInstituteAdmin = user?.role === 'INSTITUTE_ADMIN'
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
   const isAuthenticated = !!token && !!user
 
   return (
     <AuthContext.Provider value={{
-      user, token, loading, isAuthenticated, isOwner, isStudent,
+      user, token, loading, isAuthenticated, isOwner, isStudent, isInstituteAdmin, isSuperAdmin,
       login, register, logout,
     }}>
       {children}

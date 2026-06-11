@@ -6,48 +6,43 @@ Detailed breakdown of each file in the `backend/` directory.
 
 ## `main.py`
 The central entry point of the FastAPI application.
-- **Lifespan Management:** Initializes the database, seeds the default admin account, and ensures MinIO buckets exist.
-- **Middleware:** Configures CORS to allow requests from the frontend and admin dashboard.
-- **Router Inclusion:** Mounts all API routers under their respective prefixes.
-- **WebSocket Route:** Defines the `/ws/{user_id}` endpoint for real-time notifications, including token validation.
-- **Health Check:** Provides a `/health` endpoint for monitoring.
+- **Lifespan Management:** Initializes the database and seeds the default super-admin account. All other configurations (institutions, etc.) are handled by the Super Admin via the dashboard.
+- **Router Inclusion:** Mounts all API routers, including the new `institutions` router.
 
 ## `models.py`
 Contains the SQLAlchemy database models.
-- **`User`:** Stores user information, roles (`student_resident`, `canteen_owner`, `admin`), and approval status.
-- **`Canteen`:** Represents a canteen, linked to an owner. Tracks rating and open/closed status.
+- **`User`:** Base authentication model with role-based access control.
+- **`Institution`:** Represents an IIT or campus (name, short name, domain, etc.).
+- **Profiles:** Role-specific data storage:
+    - **`StudentProfile`:** Roll number, hostel, room, wallet balance.
+    - **`CanteenOwnerProfile`:** FSSAI license, business name.
+    - **`InstituteAdminProfile`:** Institutional oversight.
+- **`Canteen`:** Linked to an owner and an institution.
 - **`MenuItem`:** Individual items in a canteen's menu.
-- **`Order`:** Tracks order status (`pending`, `preparing`, `ready_in_5`, `completed`, `cancelled`) and total amount.
-- **`OrderItem`:** A snapshot of menu items included in an order at the time of purchase.
-- **`Review`:** User-submitted ratings and comments for canteens.
+- **`Order`:** Scoped by canteen and user within an institution.
+- **`Review`:** User-submitted ratings and comments.
 
 ## `schemas.py`
-Defines Pydantic models (Data Transfer Objects) for request validation and response serialization.
-- **Auth:** `RegisterRequest`, `LoginRequest`, `TokenResponse`.
-- **Canteen:** `CanteenCreate`, `CanteenUpdate`, `CanteenOut`.
-- **Order:** `OrderCreate`, `OrderStatusUpdate`, `OrderOut`.
-- **Search:** `PriceComparisonResult`.
-
-## `database.py`
-Handles the asynchronous connection to the PostgreSQL database.
-- Uses `SQLAlchemy` with the `asyncpg` driver.
-- Provides `get_db` dependency for injecting database sessions into routes.
-- Includes `init_db` function to create tables based on the models.
+Defines Pydantic models for request validation and response serialization.
+- **Auth:** `RegisterRequest` (updated with role-specific fields), `UserOut` (with profile expansion).
+- **Institution:** `InstitutionCreate`, `InstitutionUpdate`, `InstitutionOut`.
+- **Canteen:** `CanteenCreate` (includes `institute_id`), `CanteenOut`.
 
 ## `auth.py`
 Core security and authentication module.
-- **Password Hashing:** Uses `bcrypt` for secure password storage.
-- **JWT Handling:** Uses `python-jose` to create and decode JSON Web Tokens.
+- **JWT Handling:** Token payload now includes `institute_id`.
 - **Dependencies:**
-    - `get_current_user`: Validates the JWT and returns the User object.
-    - `require_owner`, `require_student`, `require_admin`: Role-based access control.
+    - `get_current_user`: Loads the user and their specific profile.
+    - `require_super_admin`, `require_institute_admin`, `require_owner`, `require_student`: Tiered access control.
+
+## `routers/`
+- **`institutions.py`:** CRUD for platform-wide institutions (Super Admin only).
+- **`admin.py`:** Refactored for tiered stats and institute-scoped owner management.
+- **`auth.py`:** Atomic user and profile creation.
+- **`canteens.py` & `menu.py`:** Scoped queries using `institute_id` from the token.
 
 ## `websocket_manager.py`
-Manages active WebSocket connections.
-- **`ConnectionManager`:** Tracks active connections in a dictionary mapping `user_id` to a list of `WebSocket` objects.
-- **Methods:** `connect`, `disconnect`, `send_to_user`, `broadcast`.
+Manages active WebSocket connections for real-time notifications.
 
 ## `minio_client.py`
-Wrapper around the MinIO Python SDK for interacting with S3-compatible storage.
-- Handles file uploads for canteen banners and menu item images.
-- Ensures required buckets (`canteens`, `menu`) exist on startup.
+Wrapper for S3-compatible storage interaction.

@@ -55,7 +55,7 @@ export default function AdminAuth() {
               id="admin-email"
               type="email"
               className="form-input"
-              placeholder="admin@bookit.app"
+              placeholder="admin@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -97,10 +97,6 @@ export default function AdminAuth() {
             }
           </button>
         </form>
-
-        <p className="adminauth-hint">
-          Default: <code>admin@bookit.app</code> / <code>admin123</code>
-        </p>
       </div>
     </div>
   )

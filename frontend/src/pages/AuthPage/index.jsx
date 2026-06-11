@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { institutionsAPI } from '../../services/api'
 import { ChefHat, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import './index.css'
@@ -12,11 +13,29 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  const [institutions, setInstitutions] = useState([])
 
   const [form, setForm] = useState({
     email: '', password: '', name: '', phone: '',
-    role: 'student_resident',
+    role: 'STUDENT', institute_id: '',
+    roll_number: '', hostel_name: '', room_number: '',
+    fssai_license: ''
   })
+
+  useEffect(() => {
+    const fetchInstitutions = async () => {
+      try {
+        const res = await institutionsAPI.list()
+        setInstitutions(res.data)
+        if (res.data.length > 0) {
+          setForm(f => ({ ...f, institute_id: res.data[0].id }))
+        }
+      } catch (err) {
+        console.error('Failed to fetch institutions', err)
+      }
+    }
+    fetchInstitutions()
+  }, [])
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
@@ -28,19 +47,26 @@ export default function AuthPage() {
       let user
       if (mode === 'login') {
         user = await login(form.email, form.password)
-        toast.success(`Welcome back, ${user.name.split(' ')[0]}!`)
+        const profile = user.student_profile || user.owner_profile || user.admin_profile
+        toast.success(`Welcome back, ${profile?.name?.split(' ')[0] || 'User'}!`)
       } else {
         user = await register(form)
-        toast.success(`Welcome to BookIt, ${user.name.split(' ')[0]}!`)
+        const profile = user.student_profile || user.owner_profile || user.admin_profile
+        toast.success(`Welcome to BookIt, ${profile?.name?.split(' ')[0] || 'User'}!`)
       }
 
-      // Redirect to role-specific welcome page
-      if (user.role === 'student_resident') {
+      // Redirect based on role
+      if (user.role === 'STUDENT') {
         navigate('/welcome/student')
-      } else if (user.role === 'canteen_owner' && user.is_approved) {
+      } else if (user.role === 'CANTEEN_OWNER' && user.is_approved) {
         navigate('/welcome/owner')
-      } else if (user.role === 'canteen_owner') {
+      } else if (user.role === 'CANTEEN_OWNER') {
         navigate('/welcome/pending')
+      } else if (user.role === 'INSTITUTE_ADMIN') {
+        navigate('/admin')
+      } else if (user.role === 'SUPER_ADMIN') {
+        const serverIp = import.meta.env.VITE_SERVER_IP || window.location.hostname
+        window.location.href = `http://${serverIp}:5174/`
       } else {
         navigate('/')
       }
@@ -101,18 +127,64 @@ export default function AuthPage() {
             {error && <div className="alert alert-error">{error}</div>}
 
             {mode === 'register' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <>
                 <div className="form-group">
-                  <label className="form-label">Full Name</label>
-                  <input id="reg-name" className="form-input" placeholder="Arjun Sharma"
-                    value={form.name} onChange={set('name')} required />
+                  <label className="form-label">Select Institution</label>
+                  <select
+                    className="form-input"
+                    value={form.institute_id}
+                    onChange={set('institute_id')}
+                    required
+                  >
+                    {institutions.map(inst => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name} ({inst.short_name})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Phone</label>
-                  <input id="reg-phone" className="form-input" placeholder="9876543210"
-                    value={form.phone} onChange={set('phone')} required />
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Full Name</label>
+                    <input id="reg-name" className="form-input" placeholder="Arjun Sharma"
+                      value={form.name} onChange={set('name')} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Phone</label>
+                    <input id="reg-phone" className="form-input" placeholder="9876543210"
+                      value={form.phone} onChange={set('phone')} required />
+                  </div>
                 </div>
-              </div>
+
+                {form.role === 'STUDENT' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                    <div className="form-group">
+                      <label className="form-label">Roll Number</label>
+                      <input className="form-input" placeholder="22B1234"
+                        value={form.roll_number} onChange={set('roll_number')} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Hostel</label>
+                      <input className="form-input" placeholder="H-15"
+                        value={form.hostel_name} onChange={set('hostel_name')} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Room</label>
+                      <input className="form-input" placeholder="302-A"
+                        value={form.room_number} onChange={set('room_number')} required />
+                    </div>
+                  </div>
+                )}
+
+                {form.role === 'CANTEEN_OWNER' && (
+                  <div className="form-group">
+                    <label className="form-label">FSSAI License Number</label>
+                    <input className="form-input" placeholder="12345678901234"
+                      value={form.fssai_license} onChange={set('fssai_license')} required />
+                  </div>
+                )}
+              </>
             )}
 
             <div className="form-group">
@@ -147,14 +219,14 @@ export default function AuthPage() {
                   <button
                     type="button"
                     id="role-student"
-                    className={`authpage-role-btn ${form.role === 'student_resident' ? 'active' : ''}`}
-                    onClick={() => setForm(f => ({ ...f, role: 'student_resident' }))}
+                    className={`authpage-role-btn ${form.role === 'STUDENT' ? 'active' : ''}`}
+                    onClick={() => setForm(f => ({ ...f, role: 'STUDENT' }))}
                   >🎓 Student / Resident</button>
                   <button
                     type="button"
                     id="role-owner"
-                    className={`authpage-role-btn ${form.role === 'canteen_owner' ? 'active' : ''}`}
-                    onClick={() => setForm(f => ({ ...f, role: 'canteen_owner' }))}
+                    className={`authpage-role-btn ${form.role === 'CANTEEN_OWNER' ? 'active' : ''}`}
+                    onClick={() => setForm(f => ({ ...f, role: 'CANTEEN_OWNER' }))}
                   >🍽️ Canteen Owner</button>
                 </div>
               </div>

@@ -1,19 +1,20 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '../../contexts/AdminAuthContext'
 import {
-  LayoutDashboard, Users, Store, LogOut, Shield, ChevronRight
+  LayoutDashboard, Users, Store, LogOut, Shield, ChevronRight, Building2
 } from 'lucide-react'
 import './index.css'
-
-const NAV_ITEMS = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
-  { to: '/owners', icon: Users, label: 'Owner Approvals' },
-  { to: '/canteens', icon: Store, label: 'Canteens' },
-]
 
 export default function AdminSidebar() {
   const { user, logout } = useAdminAuth()
   const navigate = useNavigate()
+
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/institutions', icon: Building2, label: 'Institutions' },
+    { to: '/owners', icon: Users, label: 'Owner Approvals' },
+    { to: '/canteens', icon: Store, label: 'Canteens' },
+  ]
 
   const handleLogout = () => {
     logout()
@@ -35,7 +36,7 @@ export default function AdminSidebar() {
 
       {/* Nav */}
       <nav className="adminsidebar-nav">
-        {NAV_ITEMS.map(({ to, icon: Icon, label, end }) => (
+        {navItems.map(({ to, icon: Icon, label, end }) => (
           <NavLink
             key={to}
             to={to}

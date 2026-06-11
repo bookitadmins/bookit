@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { adminAPI } from '../../services/api'
-import { Users, Store, ShoppingBag, Clock, TrendingUp, RefreshCw } from 'lucide-react'
+import { useAdminAuth } from '../../contexts/AdminAuthContext'
+import { Users, Store, ShoppingBag, Clock, Building2, RefreshCw } from 'lucide-react'
 import './index.css'
 
 export default function AdminDashboard() {
@@ -9,7 +10,10 @@ export default function AdminDashboard() {
 
   const load = async () => {
     setLoading(true)
-    try { const res = await adminAPI.stats(); setStats(res.data) } catch {}
+    try { 
+      const res = await adminAPI.globalStats()
+      setStats(res.data) 
+    } catch {}
     setLoading(false)
   }
 
@@ -18,6 +22,7 @@ export default function AdminDashboard() {
   const statCards = stats ? [
     { label: 'Total Users', value: stats.total_users, icon: Users, color: 'var(--purple)', gradient: 'linear-gradient(135deg,rgba(168,85,247,0.15),rgba(168,85,247,0.05))' },
     { label: 'Students', value: stats.total_students, icon: Users, color: 'var(--blue)', gradient: 'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05))' },
+    { label: 'Total Institutions', value: stats.total_institutions, icon: Building2, color: 'var(--amber)', gradient: 'linear-gradient(135deg,rgba(251,191,36,0.2),rgba(251,191,36,0.05))' },
     { label: 'Approved Owners', value: stats.approved_owners, icon: Store, color: 'var(--green)', gradient: 'linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))' },
     { label: 'Pending Approval', value: stats.pending_owners, icon: Clock, color: 'var(--amber)', gradient: 'linear-gradient(135deg,rgba(251,191,36,0.2),rgba(251,191,36,0.05))', alert: stats.pending_owners > 0 },
     { label: 'Total Canteens', value: stats.total_canteens, icon: Store, color: 'var(--purple)', gradient: 'linear-gradient(135deg,rgba(168,85,247,0.12),rgba(168,85,247,0.04))' },

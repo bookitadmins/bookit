@@ -21,7 +21,7 @@ export default function WelcomePending() {
 
         <h1 className="welcomepending-title">
           Almost there,{' '}
-          <span style={{ color: 'var(--purple)' }}>{user?.name?.split(' ')[0] || 'Chef'}!</span>
+          <span style={{ color: 'var(--purple)' }}>{user?.owner_profile?.name?.split(' ')[0] || 'Chef'}!</span>
         </h1>
 
         <p className="welcomepending-subtitle">
